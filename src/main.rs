@@ -1,3 +1,7 @@
+use clap::StructOpt;
+use format_number::CommandOptions;
+
 fn main() {
-    println!("Hello, world!");
+    let cli = CommandOptions::parse();
+    println!("{:?}", cli);
 }
