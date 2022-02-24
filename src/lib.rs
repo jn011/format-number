@@ -60,39 +60,39 @@ impl From<ParseIntError> for NumberReaderError {
     }
 }
 
-trait NumberReader {
+trait NumberFormatter {
     fn read(&self, num: &str) -> anyhow::Result<i128, NumberReaderError>;
 }
 
 struct IntegerNumberReader;
-impl NumberReader for IntegerNumberReader {
+impl NumberFormatter for IntegerNumberReader {
     fn read(&self, integer: &str) -> anyhow::Result<i128, NumberReaderError> {
         integer.parse::<i128>().map_err(|op| op.into())
     }
 }
 
 struct HexadecimalNumberReader;
-impl NumberReader for HexadecimalNumberReader {
+impl NumberFormatter for HexadecimalNumberReader {
     fn read(&self, hexadecimal: &str) -> anyhow::Result<i128, NumberReaderError> {
         let without_prefix = hexadecimal.trim_start_matches("0x");
         i128::from_str_radix(without_prefix, 16).map_err(|op| op.into())
     }
 }
 
-struct BinaryNumberReader;
-impl NumberReader for BinaryNumberReader {
+struct BinaryNumberFormatter;
+impl NumberFormatter for BinaryNumberFormatter {
     fn read(&self, binary_num: &str) -> anyhow::Result<i128, NumberReaderError> {
         i128::from_str_radix(binary_num, 2).map_err(|op| op.into())
     }
 }
 
-struct NumberReaderFactory;
-impl NumberReaderFactory {
-    pub fn new_number_reader(number_type: &NumberType) -> Box<dyn NumberReader> {
+struct NumberFormatterFactory;
+impl NumberFormatterFactory {
+    pub fn new_number_formatter(number_type: &NumberType) -> Box<dyn NumberFormatter> {
         match number_type {
             NumberType::Integer => Box::new(IntegerNumberReader {}),
             NumberType::Hexadecimal => Box::new(HexadecimalNumberReader {}),
-            NumberType::Binary => Box::new(BinaryNumberReader {}),
+            NumberType::Binary => Box::new(BinaryNumberFormatter {}),
         }
     }
 }
@@ -127,20 +127,20 @@ mod tests {
     #[test_case(NumberType::Integer)]
     #[test_case(NumberType::Hexadecimal)]
     #[test_case(NumberType::Binary)]
-    fn new_number_reader_should_match_number_type(number_type: NumberType) {
-        let _ = *NumberReaderFactory::new_number_reader(&number_type);
+    fn new_number_formatter_should_match_number_type(number_type: NumberType) {
+        let _ = *NumberFormatterFactory::new_number_formatter(&number_type);
     }
 
     #[test_case(NumberType::Integer, "10", 10)]
     #[test_case(NumberType::Hexadecimal, "FFFF", 65535)]
     #[test_case(NumberType::Binary, "0000110", 6)]
-    fn new_number_reader_should_parse_number_type(
+    fn new_number_formatter_should_read_number_type(
         number_type: NumberType,
         input_number: &str,
         expected_number: i128,
     ) {
         // Arrange
-        let reader = NumberReaderFactory::new_number_reader(&number_type);
+        let reader = NumberFormatterFactory::new_number_formatter(&number_type);
 
         // Act
         let actual_number = reader.read(input_number);
