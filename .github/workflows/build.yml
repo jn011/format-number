@@ -1,4 +1,4 @@
-name: build
+name: Build
 
 on:
   push:
@@ -35,8 +35,7 @@ jobs:
           args: '-- --test-threads 1'
 
       - name: Upload to codecov.io
-      - uses: actions/checkout@master
-      - uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v2
         with:
           files: ./coverage.xml
           fail_ci_if_error: true
