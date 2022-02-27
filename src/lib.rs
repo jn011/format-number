@@ -32,10 +32,12 @@ impl fmt::Display for NumberType {
 }
 
 #[derive(Debug, Parser)]
-#[clap(author, version, about)]
+#[clap(version, about)]
 pub struct CommandOptions {
+    /// Type of number that is being passed to the <NUMBER> argument
     #[clap(short, long, arg_enum, default_value_t=NumberType::Integer)]
     pub number_type: NumberType,
+    /// The number to format
     pub number: String,
 }
 
