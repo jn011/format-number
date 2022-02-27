@@ -159,6 +159,17 @@ mod tests {
     use super::*;
     use test_case::test_case;
 
+    #[test_case(NumberType::Integer, "Integer")]
+    #[test_case(NumberType::Binary, "Binary")]
+    #[test_case(NumberType::Hexadecimal, "Hexadecimal")]
+    fn number_type_fmt_should_be_expected_value(number_type: NumberType, expected_value: &str) {
+        // Act
+        let actual_value = format!("{}", number_type);
+
+        // Assert
+        assert_eq!(actual_value, expected_value);
+    }
+
     #[test]
     fn new_command_options_should_return_expected_value() {
         // Arrange
@@ -225,7 +236,7 @@ mod tests {
         // Arrange
         let command_options = CommandOptions {
             number_type: NumberType::Binary,
-            number: "0b1101011".to_string(),
+            number: String::from("0b1101011"),
         };
 
         let command_context = CommandContext::new(command_options);
@@ -237,14 +248,14 @@ mod tests {
         assert!(output.is_ok());
         let vec = output.unwrap();
 
-        assert!(vec.contains(&(NumberType::Integer, "107".to_string())));
-        assert!(vec.contains(&(NumberType::Binary, "1101011".to_string())));
-        assert!(vec.contains(&(NumberType::Hexadecimal, "6b".to_string())));
+        assert!(vec.contains(&(NumberType::Integer, String::from("107"))));
+        assert!(vec.contains(&(NumberType::Binary, String::from("1101011"))));
+        assert!(vec.contains(&(NumberType::Hexadecimal, String::from("6b"))));
     }
 
-    #[test_case(CommandOptions { number_type: NumberType::Integer, number: "12".to_string() })]
-    #[test_case(CommandOptions { number_type: NumberType::Binary, number: "100001".to_string() })]
-    #[test_case(CommandOptions { number_type: NumberType::Hexadecimal, number: "0xAbC3f09".to_string() })]
+    #[test_case(CommandOptions { number_type: NumberType::Integer, number: String::from("12") })]
+    #[test_case(CommandOptions { number_type: NumberType::Binary, number: String::from("100001") })]
+    #[test_case(CommandOptions { number_type: NumberType::Hexadecimal, number: String::from("0xAbC3f09") })]
     fn command_context_should_format_all_types_in_expected_order(command_options: CommandOptions) {
         // Arrange
         let command_context = CommandContext::new(command_options);
