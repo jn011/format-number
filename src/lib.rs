@@ -1,16 +1,37 @@
 use clap::{ArgEnum, Parser};
+use core::fmt;
 use std::num::ParseIntError;
 use thiserror::Error;
 
-#[derive(ArgEnum, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(ArgEnum, Copy, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum NumberType {
     Integer,
     Hexadecimal,
     Binary,
 }
 
+impl NumberType {
+    pub fn iter() -> std::slice::Iter<'static, NumberType> {
+        static NUMBERTYPES: [NumberType; 3] = [
+            NumberType::Integer,
+            NumberType::Hexadecimal,
+            NumberType::Binary,
+        ];
+        NUMBERTYPES.iter()
+    }
+}
+
+impl fmt::Display for NumberType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            NumberType::Integer => write!(f, "Integer"),
+            NumberType::Hexadecimal => write!(f, "Hexadecimal"),
+            NumberType::Binary => write!(f, "Binary"),
+        }
+    }
+}
+
 #[derive(Debug, Parser)]
-#[clap(name = "format-number")]
 #[clap(author, version, about)]
 pub struct CommandOptions {
     #[clap(short, long, arg_enum, default_value_t=NumberType::Integer)]
@@ -35,10 +56,29 @@ impl CommandContext {
     pub fn new(command_options: CommandOptions) -> Self {
         Self { command_options }
     }
+
+    pub fn format_all_number_types(
+        &self,
+    ) -> anyhow::Result<Vec<(NumberType, String)>, NumberFormatterError> {
+        let mut vec = Vec::<(NumberType, String)>::new();
+
+        let formatter =
+            NumberFormatterFactory::new_number_formatter(&self.command_options.number_type);
+
+        let num = formatter.read(&self.command_options.number)?;
+
+        for number_type in NumberType::iter() {
+            let formatter = NumberFormatterFactory::new_number_formatter(number_type);
+            let output = formatter.format(num)?;
+            vec.push((*number_type, output));
+        }
+
+        Ok(vec)
+    }
 }
 
 #[derive(Error, Debug)]
-enum NumberFormatterError {
+pub enum NumberFormatterError {
     #[error("Unknown error occurred")]
     Unknown,
     #[error("No value was entered")]
@@ -94,7 +134,8 @@ impl NumberFormatter for HexadecimalNumberFormatter {
 struct BinaryNumberFormatter;
 impl NumberFormatter for BinaryNumberFormatter {
     fn read(&self, binary_num: &str) -> anyhow::Result<i128, NumberFormatterError> {
-        i128::from_str_radix(binary_num, 2).map_err(|op| op.into())
+        let without_prefix = binary_num.trim_start_matches("0b");
+        i128::from_str_radix(without_prefix, 2).map_err(|op| op.into())
     }
 
     fn format(&self, num: i128) -> anyhow::Result<String, NumberFormatterError> {
@@ -177,5 +218,47 @@ mod tests {
         // Assert
         assert!(actual_number.is_ok());
         assert_eq!(expected_output, actual_number.unwrap());
+    }
+
+    #[test]
+    fn command_context_should_format_all_types_correctly() {
+        // Arrange
+        let command_options = CommandOptions {
+            number_type: NumberType::Binary,
+            number: "0b1101011".to_string(),
+        };
+
+        let command_context = CommandContext::new(command_options);
+
+        // Act
+        let output = command_context.format_all_number_types();
+
+        // Assert
+        assert!(output.is_ok());
+        let vec = output.unwrap();
+
+        assert!(vec.contains(&(NumberType::Integer, "107".to_string())));
+        assert!(vec.contains(&(NumberType::Binary, "1101011".to_string())));
+        assert!(vec.contains(&(NumberType::Hexadecimal, "6b".to_string())));
+    }
+
+    #[test_case(CommandOptions { number_type: NumberType::Integer, number: "12".to_string() })]
+    #[test_case(CommandOptions { number_type: NumberType::Binary, number: "100001".to_string() })]
+    #[test_case(CommandOptions { number_type: NumberType::Hexadecimal, number: "0xAbC3f09".to_string() })]
+    fn command_context_should_format_all_types_in_expected_order(command_options: CommandOptions) {
+        // Arrange
+        let command_context = CommandContext::new(command_options);
+
+        // Act
+        let output = command_context.format_all_number_types();
+
+        // Assert
+        assert!(output.is_ok());
+        let vec = output.unwrap();
+
+        assert_eq!(vec.len(), 3);
+        assert_eq!(vec[0].0, NumberType::Integer);
+        assert_eq!(vec[1].0, NumberType::Hexadecimal);
+        assert_eq!(vec[2].0, NumberType::Binary);
     }
 }
