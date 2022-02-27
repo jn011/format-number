@@ -1,7 +1,7 @@
 [package]
 name = "format-number"
 author = "James N."
-description = "A simple command line tool to format your number into various other representations"
+description = "A simple to use command line tool which format a given number into various other representations"
 version = "0.1.0"
 edition = "2021"
 
