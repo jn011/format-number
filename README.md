@@ -4,6 +4,7 @@
 [![Codecov](https://codecov.io/gh/jn011/format-number/branch/master/graph/badge.svg?token=3OSNJPEUBL)](https://codecov.io/gh/jn011/format-number)
 
 ```console
+$ format-number --help
 format-number
 A simple to use command line tool which format a given number into various other representations
 
