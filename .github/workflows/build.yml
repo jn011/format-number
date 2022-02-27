@@ -16,7 +16,7 @@ env:
 
 jobs:
   check:
-    name: format-number
+    name: Test Coverage Report
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -37,7 +37,6 @@ jobs:
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
         with:
-          files: ./coverage.xml
           fail_ci_if_error: true
           verbose: true
 
@@ -51,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Build
+    - name: Build & Test
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
